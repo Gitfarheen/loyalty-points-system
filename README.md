@@ -16,7 +16,7 @@ A web-based loyalty points system that lets staff register customers, track thei
 
 - **HTML** — page structure and forms
 - **CSS** — styling and layout (used CSS Grid for the two-column form layout)
-- **JavaScript (Vanilla)** — all the logic: validation, points calculation, tier system
+- **JavaScript** — all the logic: validation, points calculation, tier system
 - **localStorage** — saves customer data so it doesn't disappear on page refresh
 
 I chose not to use any frameworks because the requirements could be met with plain JavaScript, and this keeps the project easy to run, review, and explain during the interview.
