@@ -59,6 +59,7 @@ I chose not to use any frameworks because the requirements could be met with pla
 
 ```
 loyalty-points-system/
-├── index.html    ← entire app (HTML + CSS + JS in one file)
-└── README.md     ← this file
+├── index.html
+├── README.md
+└── AI_NOTE.md
 ```
