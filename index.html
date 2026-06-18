@@ -2,530 +2,1128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Loyalty Points System</title>
-  <!--
-    Customer Loyalty Points System
-    Built by: Farheen Chowdhary
-    Date: 18 June 2026
-    
-    This was my first time working with localStorage properly.
-    Took me a while to figure out JSON.parse and JSON.stringify
-    but once I got it, the rest made sense.
-  -->
-  <style> 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoyaltyIQ — Customer Loyalty Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:        #0D0D0D;
+      --ink-soft:   #3A3A3A;
+      --ink-muted:  #7A7A7A;
+      --surface:    #F7F5F0;
+      --card:       #FFFFFF;
+      --border:     #E5E2DB;
+      --gold:       #C9A84C;
+      --gold-light: #F0E6C8;
+      --gold-glow:  rgba(201,168,76,0.18);
+      --green:      #2D7A55;
+      --green-light:#E6F4ED;
+      --red:        #C0392B;
+      --red-light:  #FDECEA;
+      --purple:     #5B4FCF;
+      --purple-light:#EEECFB;
+      --radius:     12px;
+      --shadow:     0 2px 16px rgba(0,0,0,0.08);
+      --shadow-lg:  0 8px 40px rgba(0,0,0,0.12);
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 30px 20px;
-      color: #333;
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 8px;
-      color: #2c3e50;
-      font-size: 24px;
+    /* ─── NAV ─── */
+    nav {
+      background: var(--ink);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    .subtitle {
-      text-align: center;
-      color: #888;
+    .nav-brand {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      color: var(--gold);
+      letter-spacing: -0.5px;
+    }
+    .nav-brand span { color: #fff; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      background: none;
+      border: none;
+      color: #aaa;
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 14px;
-      margin-bottom: 30px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-tab.active { color: var(--gold); background: rgba(201,168,76,0.15); }
+
+    /* ─── LAYOUT ─── */
+    .app { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; }
+
+    /* ─── HERO BANNER ─── */
+    .hero {
+      background: var(--ink);
+      border-radius: var(--radius);
+      padding: 32px 36px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: var(--gold-glow);
+      filter: blur(40px);
+    }
+    .hero-text h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .hero-text p {
+      color: #aaa;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .hero-stats { display: flex; gap: 32px; }
+    .hero-stat { text-align: right; }
+    .hero-stat .val {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .hero-stat .lbl { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* ─── GRID ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    @media (max-width: 720px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; align-items: flex-start; }
+      .hero-stats { flex-direction: row; gap: 20px; }
+      .hero-stat { text-align: left; }
     }
 
-    /* I used a 2-column grid layout for the forms side by side */
-    .container {
-      max-width: 880px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
+    /* ─── CARD ─── */
     .card {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 22px;
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
     }
-
-    .card h2 {
-      font-size: 17px;
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink-muted);
       margin-bottom: 18px;
-      color: #2c3e50;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f0f0f0;
     }
 
+    /* ─── STAT CARDS ─── */
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: var(--shadow);
+    }
+    .stat-card .icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+    .stat-card .num {
+      font-family: 'Space Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+    .stat-card .delta {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .delta-up { background: var(--green-light); color: var(--green); }
+    .delta-neutral { background: var(--gold-light); color: #9B7B2A; }
+
+    /* ─── FORMS ─── */
+    .form-group { margin-bottom: 16px; }
     label {
       display: block;
       font-size: 13px;
-      font-weight: bold;
-      margin-top: 14px;
-      margin-bottom: 5px;
-      color: #444;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
     }
-
-    input,
-    select {
+    input, select {
       width: 100%;
-      padding: 9px 11px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 14px;
-      font-family: Arial, sans-serif;
-    }
-
-    input:focus,
-    select:focus {
+      color: var(--ink);
+      background: var(--surface);
+      transition: border-color 0.15s, box-shadow 0.15s;
       outline: none;
-      border-color: #3498db;
-      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
     }
-
-    /* Red border when field has error */
-    input.invalid {
-      border-color: #e74c3c;
+    input:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+      background: #fff;
     }
+    input.error { border-color: var(--red); }
+    .field-error { font-size: 12px; color: var(--red); margin-top: 4px; }
+    .field-hint { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
 
-    .error-msg {
-      color: #e74c3c;
-      font-size: 12px;
-      margin-top: 4px;
-      min-height: 16px;
-    }
-
-    .hint {
-      font-size: 12px;
-      color: #999;
-      margin-top: 4px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 11px;
-      background-color: #2980b9;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: #2471a3;
-    }
-
-    /* Small green message that appears after success */
-    .success-box {
-      display: none;
-      margin-top: 12px;
-      padding: 9px 12px;
-      background: #eafaf1;
-      border-left: 4px solid #27ae60;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #1e8449;
-    }
-
-    /* Summary table spans full width */
-    .full-width {
-      grid-column: 1 / -1;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
       font-size: 14px;
-      margin-top: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
     }
-
-    thead {
-      background: #f7f8fa;
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+      width: 100%;
+      margin-top: 4px;
     }
+    .btn-primary:hover { background: #2a2a2a; transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-gold {
+      background: var(--gold);
+      color: #fff;
+      width: 100%;
+      margin-top: 4px;
+    }
+    .btn-gold:hover { background: #b8963e; transform: translateY(-1px); }
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 13px;
+      border-radius: 6px;
+    }
+    .btn-danger { background: var(--red-light); color: var(--red); }
+    .btn-danger:hover { background: var(--red); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--ink-muted); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
 
-    th {
-      padding: 10px 12px;
-      text-align: left;
+    /* ─── TIER BADGE ─── */
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 12px;
-      color: #777;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .tier-Bronze  { background: #F4EAE0; color: #8B5E3C; }
+    .tier-Silver  { background: #EFEFEF; color: #5A5A5A; }
+    .tier-Gold    { background: var(--gold-light); color: #9B7B2A; }
+    .tier-Platinum{ background: #E8EEF8; color: #2C4A8A; }
 
+    /* ─── TABLE ─── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--ink-muted);
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--border);
+    }
     td {
-      padding: 11px 12px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface); }
+    .customer-name { font-weight: 600; font-size: 14px; }
+    .customer-id { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--ink-muted); }
+    .points-val {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 15px;
     }
 
-    tr:last-child td {
-      border-bottom: none;
+    /* ─── TOAST ─── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.25s ease;
+      max-width: 320px;
+    }
+    .toast.success { border-left: 4px solid var(--green); }
+    .toast.error   { border-left: 4px solid var(--red); }
+    .toast.info    { border-left: 4px solid var(--gold); }
+    @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ─── TRANSACTION LOG ─── */
+    .txn-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .txn-item:last-child { border-bottom: none; }
+    .txn-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .txn-desc { flex: 1; }
+    .txn-desc .name { font-size: 13px; font-weight: 600; }
+    .txn-desc .meta { font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
+    .txn-pts { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; }
+    .pts-pos { color: var(--green); }
+    .pts-neg { color: var(--red); }
+
+    /* ─── PROGRESS BAR ─── */
+    .progress-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 8px 0 4px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--gold) 0%, #E8C566 100%);
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    tr:hover td {
-      background: #fafafa;
+    /* ─── BONUS CHIPS ─── */
+    .bonus-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .bonus-chip {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .bonus-chip:hover, .bonus-chip.selected {
+      border-color: var(--gold);
+      background: var(--gold-light);
+      color: #9B7B2A;
+    }
+    .bonus-chip { background: var(--surface); color: var(--ink-soft); border-color: var(--border); }
+
+    /* ─── SECTION HEADER ─── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .section-header h2 { font-size: 18px; font-weight: 700; }
+    .section-header p { font-size: 13px; color: var(--ink-muted); }
+
+    /* ─── SEARCH ─── */
+    .search-wrap { position: relative; margin-bottom: 16px; }
+    .search-wrap input { padding-left: 38px; }
+    .search-icon {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      font-size: 16px;
+      pointer-events: none;
     }
 
-    .no-data {
+    /* ─── EMPTY STATE ─── */
+    .empty {
       text-align: center;
-      color: #bbb;
-      padding: 30px;
+      padding: 40px 20px;
+      color: var(--ink-muted);
+    }
+    .empty .icon { font-size: 36px; margin-bottom: 10px; }
+    .empty p { font-size: 14px; }
+
+    /* ─── MODAL ─── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: var(--shadow-lg);
+      animation: scaleIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes scaleIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-header h3 { font-size: 17px; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--ink-muted); line-height: 1; }
+
+    /* ─── TABS ─── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── POINTS BREAKDOWN ─── */
+    .breakdown-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px dashed var(--border);
       font-size: 14px;
     }
-
-    /* Tier badge colors */
-    .tier-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-total {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0 0;
+      font-weight: 700;
+      font-size: 15px;
     }
 
-    .Bronze   { background: #fde8d8; color: #7e5109; }
-    .Silver   { background: #eaecee; color: #555; }
-    .Gold     { background: #fef9e7; color: #9a7d0a; }
-    .Platinum { background: #d6eaf8; color: #1a5276; }
-
-    /* Points preview text */
-    #pts-preview {
+    /* ─── FILTER BAR ─── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 5px 14px;
+      border-radius: 20px;
       font-size: 13px;
-      color: #27ae60;
-      font-weight: bold;
-      margin-top: 6px;
-      min-height: 18px;
+      font-weight: 500;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: #fff;
+    }
+
+    /* ─── REDEEM ─── */
+    .redeem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .redeem-card {
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .redeem-card:hover { border-color: var(--gold); background: var(--gold-light); }
+    .redeem-card .r-icon { font-size: 22px; margin-bottom: 8px; }
+    .redeem-card .r-title { font-size: 13px; font-weight: 700; }
+    .redeem-card .r-pts { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--gold); margin-top: 3px; }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--purple-light);
+      color: var(--purple);
     }
   </style>
 </head>
 <body>
 
-  <h1>🏆 Customer Loyalty Points System</h1>
-  <p class="subtitle">Register customers, track their spend, and reward them with points</p>
+<nav>
+  <div class="nav-brand">Loyalty<span>IQ</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('customers')">Customers</button>
+    <button class="nav-tab" onclick="showPage('transactions')">Transactions</button>
+    <button class="nav-tab" onclick="showPage('redeem')">Redeem</button>
+  </div>
+</nav>
 
-  <div class="container">
+<div class="app">
 
-    <!-- FORM 1: Register a new customer -->
-    <div class="card">
-      <h2>Register New Customer</h2>
-
-      <label for="reg-name">Full Name</label>
-      <input id="reg-name" type="text" placeholder="e.g. Rahul Verma" />
-      <div class="error-msg" id="err-name"></div>
-
-      <label for="reg-email">Email Address</label>
-      <input id="reg-email" type="email" placeholder="rahul@gmail.com" />
-      <div class="error-msg" id="err-email"></div>
-
-      <label for="reg-phone">Phone Number</label>
-      <input id="reg-phone" type="tel" placeholder="10-digit number" maxlength="10" />
-      <div class="error-msg" id="err-phone"></div>
-
-      <button onclick="registerCustomer()">Register Customer</button>
-      <div class="success-box" id="reg-success">Customer registered successfully!</div>
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="hero">
+      <div class="hero-text">
+        <h1>Customer Loyalty Platform</h1>
+        <p>Track spend, award points, manage tiers — all in one place.</p>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="val" id="dash-total-pts">0</div>
+          <div class="lbl">Total Points Issued</div>
+        </div>
+        <div class="hero-stat">
+          <div class="val" id="dash-total-cust">0</div>
+          <div class="lbl">Active Customers</div>
+        </div>
+      </div>
     </div>
 
-    <!-- FORM 2: Add points for a transaction -->
-    <div class="card">
-      <h2>Add Points for Purchase</h2>
-
-      <label for="txn-customer">Select Customer</label>
-      <select id="txn-customer">
-        <option value="">-- Select a customer --</option>
-      </select>
-      <div class="error-msg" id="err-cust"></div>
-
-      <label for="txn-amount">Amount Spent (₹)</label>
-      <input id="txn-amount" type="number" min="1" placeholder="e.g. 500" oninput="showPointsPreview()" />
-      <div class="hint">Formula: 1 point for every ₹10 spent</div>
-      <div class="error-msg" id="err-amount"></div>
-
-      <label for="txn-bonus">Apply Bonus</label>
-      <select id="txn-bonus" onchange="showPointsPreview()">
-        <option value="1">No Bonus (1×)</option>
-        <option value="1.5">Weekend Bonus (1.5×)</option>
-        <option value="2">Birthday Bonus (2×)</option>
-        <option value="3">Festival / Special Bonus (3×)</option>
-      </select>
-
-      <!-- Live preview before submitting -->
-      <div id="pts-preview"></div>
-
-      <button onclick="addPoints()">Add Points</button>
-      <div class="success-box" id="txn-success"></div>
+    <div class="grid-3">
+      <div class="stat-card">
+        <div class="icon" style="background:#E6F4ED;">🏆</div>
+        <div class="num" id="dash-platinum">0</div>
+        <div class="label">Platinum Members</div>
+        <div class="delta delta-up">≥ 10,000 pts</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon" style="background:var(--gold-light);">⭐</div>
+        <div class="num" id="dash-gold">0</div>
+        <div class="label">Gold Members</div>
+        <div class="delta delta-neutral">5,000–9,999 pts</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon" style="background:var(--purple-light);">💳</div>
+        <div class="num" id="dash-txns">0</div>
+        <div class="label">Transactions Logged</div>
+        <div class="delta delta-up">all time</div>
+      </div>
     </div>
 
-    <!-- SUMMARY TABLE: shows all registered customers -->
-    <div class="card full-width">
-      <h2>Customer Summary</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Points</th>
-            <th>Tier</th>
-            <th>Total Spent</th>
-          </tr>
-        </thead>
-        <tbody id="summary-body">
-          <tr>
-            <td colspan="7" class="no-data">No customers registered yet.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="grid-2">
+      <!-- Add Customer -->
+      <div class="card">
+        <div class="card-title">Register New Customer</div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input id="reg-name" type="text" placeholder="e.g. Priya Mehta" />
+          <div class="field-error" id="reg-name-err"></div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input id="reg-email" type="email" placeholder="priya@email.com" />
+          <div class="field-error" id="reg-email-err"></div>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input id="reg-phone" type="tel" placeholder="9876543210" maxlength="10" />
+          <div class="field-error" id="reg-phone-err"></div>
+        </div>
+        <button class="btn btn-primary" onclick="registerCustomer()">➕ Register Customer</button>
+      </div>
 
+      <!-- Add Transaction -->
+      <div class="card">
+        <div class="card-title">Add Purchase Transaction</div>
+        <div class="form-group">
+          <label>Select Customer</label>
+          <select id="txn-customer">
+            <option value="">— Choose a customer —</option>
+          </select>
+          <div class="field-error" id="txn-cust-err"></div>
+        </div>
+        <div class="form-group">
+          <label>Spend Amount (₹)</label>
+          <input id="txn-amount" type="number" min="1" placeholder="e.g. 2500" />
+          <div class="field-hint">You earn 1 point per ₹10 spent</div>
+          <div class="field-error" id="txn-amount-err"></div>
+        </div>
+        <div class="form-group">
+          <label>Bonus Category</label>
+          <div class="bonus-chips" id="bonus-chips">
+            <span class="bonus-chip selected" data-mult="1" data-label="None" onclick="selectBonus(this)">No Bonus</span>
+            <span class="bonus-chip" data-mult="1.5" data-label="Weekend" onclick="selectBonus(this)">🌟 Weekend (1.5×)</span>
+            <span class="bonus-chip" data-mult="2" data-label="Birthday" onclick="selectBonus(this)">🎂 Birthday (2×)</span>
+            <span class="bonus-chip" data-mult="3" data-label="Festival" onclick="selectBonus(this)">🪔 Festival (3×)</span>
+            <span class="bonus-chip" data-mult="2.5" data-label="First Purchase" onclick="selectBonus(this)">🛍️ First Purchase (2.5×)</span>
+          </div>
+        </div>
+        <div id="pts-preview" style="display:none; padding:10px 14px; background:var(--green-light); border-radius:8px; margin-bottom:12px; font-size:13px; color:var(--green); font-weight:600;"></div>
+        <button class="btn btn-gold" onclick="addTransaction()">💳 Record Transaction</button>
+      </div>
+    </div>
   </div>
 
-  <script>
+  <!-- CUSTOMERS -->
+  <div id="page-customers" class="page">
+    <div class="section-header">
+      <div><h2>All Customers</h2><p>Click a customer to view their profile and points history.</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="showPage('dashboard')">+ Add New</button>
+    </div>
+    <div class="card">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="cust-search" type="text" placeholder="Search by name, email or ID…" oninput="renderCustomers()" />
+      </div>
+      <div class="filter-bar" id="tier-filters">
+        <button class="filter-btn active" onclick="setTierFilter('all', this)">All</button>
+        <button class="filter-btn" onclick="setTierFilter('Platinum', this)">Platinum</button>
+        <button class="filter-btn" onclick="setTierFilter('Gold', this)">Gold</button>
+        <button class="filter-btn" onclick="setTierFilter('Silver', this)">Silver</button>
+        <button class="filter-btn" onclick="setTierFilter('Bronze', this)">Bronze</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Tier</th>
+              <th>Points Balance</th>
+              <th>Total Spent</th>
+              <th>Transactions</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customers-tbody"></tbody>
+        </table>
+      </div>
+      <div id="customers-empty" class="empty" style="display:none;">
+        <div class="icon">👥</div>
+        <p>No customers found. Register one above.</p>
+      </div>
+    </div>
+  </div>
 
-    // I store all customers as an array of objects in localStorage
-    // Each customer has: name, email, phone, points, totalSpent
-    var customers = JSON.parse(localStorage.getItem('loyaltyCustomers') || '[]');
+  <!-- TRANSACTIONS -->
+  <div id="page-transactions" class="page">
+    <div class="section-header">
+      <div><h2>Transaction Log</h2><p>Full history of all point-earning events.</p></div>
+    </div>
+    <div class="card">
+      <div id="txn-list"></div>
+      <div id="txn-empty" class="empty" style="display:none;">
+        <div class="icon">📋</div>
+        <p>No transactions yet. Add a purchase to get started.</p>
+      </div>
+    </div>
+  </div>
 
+  <!-- REDEEM -->
+  <div id="page-redeem" class="page">
+    <div class="section-header">
+      <div><h2>Redeem Points</h2><p>Exchange points for rewards.</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Select Customer</div>
+        <div class="form-group">
+          <select id="redeem-customer" onchange="updateRedeemBalance()">
+            <option value="">— Choose a customer —</option>
+          </select>
+        </div>
+        <div id="redeem-balance-card" style="display:none; padding:16px; background:var(--surface); border-radius:10px; margin-bottom:16px;">
+          <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Available Points</div>
+          <div id="redeem-balance-val" style="font-family:'Space Mono',monospace; font-size:28px; font-weight:700; color:var(--gold);"></div>
+          <div id="redeem-tier-badge" style="margin-top:8px;"></div>
+        </div>
+        <div class="form-group">
+          <label>Points to Redeem</label>
+          <input id="redeem-pts" type="number" min="100" step="100" placeholder="Min. 100 points" oninput="updateRedeemCalc()" />
+          <div class="field-hint">100 points = ₹10 discount</div>
+          <div class="field-error" id="redeem-err"></div>
+        </div>
+        <div id="redeem-calc" style="display:none; padding:12px 14px; background:var(--gold-light); border-radius:8px; margin-bottom:12px; font-size:13px; color:#9B7B2A; font-weight:600;"></div>
+        <button class="btn btn-primary" onclick="redeemPoints()">🎁 Redeem Now</button>
+      </div>
 
-    // TIER FUNCTION
-    // Checks how many points a customer has and returns their tier name
-    // I decided on these thresholds myself based on common loyalty programs
-    function getTier(points) {
-      if (points >= 10000) return 'Platinum';
-      if (points >= 5000)  return 'Gold';
-      if (points >= 1000)  return 'Silver';
-      return 'Bronze';
-    }
+      <div class="card">
+        <div class="card-title">Reward Catalogue</div>
+        <div class="redeem-grid">
+          <div class="redeem-card">
+            <div class="r-icon">☕</div>
+            <div class="r-title">Free Coffee</div>
+            <div class="r-pts">500 pts</div>
+          </div>
+          <div class="redeem-card">
+            <div class="r-icon">🛍️</div>
+            <div class="r-title">₹100 Off Voucher</div>
+            <div class="r-pts">1,000 pts</div>
+          </div>
+          <div class="redeem-card">
+            <div class="r-icon">🚢</div>
+            <div class="r-title">Free Shipping</div>
+            <div class="r-pts">250 pts</div>
+          </div>
+          <div class="redeem-card">
+            <div class="r-icon">🎁</div>
+            <div class="r-title">Mystery Gift</div>
+            <div class="r-pts">2,000 pts</div>
+          </div>
+          <div class="redeem-card">
+            <div class="r-icon">✈️</div>
+            <div class="r-title">Travel Upgrade</div>
+            <div class="r-pts">5,000 pts</div>
+          </div>
+          <div class="redeem-card">
+            <div class="r-icon">💎</div>
+            <div class="r-title">VIP Experience</div>
+            <div class="r-pts">10,000 pts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
+</div>
 
-    // POINTS CALCULATION
-    // Base rule: 1 point per ₹10 spent
-    // Multiply by the bonus multiplier if any bonus is selected
-    function calculatePoints(amountSpent, bonusMultiplier) {
-      var basePoints = Math.floor(amountSpent / 10);
-      var totalPoints = Math.floor(basePoints * bonusMultiplier);
-      return totalPoints;
-    }
+<!-- CUSTOMER PROFILE MODAL -->
+<div id="profile-modal" class="modal-backdrop" style="display:none;" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-name"></h3>
+      <button class="modal-close" onclick="document.getElementById('profile-modal').style.display='none'">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
+<!-- TOAST -->
+<div id="toast-container"></div>
 
-    // SAVE TO LOCALSTORAGE
-    // I call this every time the customers array changes
-    // Had to use JSON.stringify because localStorage only stores strings
-    function saveData() {
-      localStorage.setItem('loyaltyCustomers', JSON.stringify(customers));
-    }
+<script>
+// ── STATE ──
+let customers = JSON.parse(localStorage.getItem('liq_customers') || '[]');
+let transactions = JSON.parse(localStorage.getItem('liq_transactions') || '[]');
+let selectedBonus = { mult: 1, label: 'None' };
+let tierFilter = 'all';
 
+// ── TIER LOGIC ──
+function getTier(pts) {
+  if (pts >= 10000) return 'Platinum';
+  if (pts >= 5000) return 'Gold';
+  if (pts >= 1000) return 'Silver';
+  return 'Bronze';
+}
+function tierIcon(t) { return {Platinum:'💎',Gold:'🏆',Silver:'🥈',Bronze:'🥉'}[t]||''; }
+function nextTierPts(pts) {
+  if (pts < 1000) return { next:'Silver', need: 1000 - pts, target: 1000 };
+  if (pts < 5000) return { next:'Gold', need: 5000 - pts, target: 5000 };
+  if (pts < 10000) return { next:'Platinum', need: 10000 - pts, target: 10000 };
+  return null;
+}
 
-    // REGISTER CUSTOMER
-    function registerCustomer() {
+// ── SAVE ──
+function save() {
+  localStorage.setItem('liq_customers', JSON.stringify(customers));
+  localStorage.setItem('liq_transactions', JSON.stringify(transactions));
+}
 
-      // First clear any previous error messages
-      clearErrors();
+// ── GENERATE ID ──
+function genId() { return 'C' + Date.now().toString(36).toUpperCase(); }
 
-      var name  = document.getElementById('reg-name').value.trim();
-      var email = document.getElementById('reg-email').value.trim();
-      var phone = document.getElementById('reg-phone').value.trim();
+// ── TOAST ──
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const d = document.createElement('div');
+  d.className = `toast ${type}`;
+  d.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
 
-      // Validate all fields before doing anything
-      var hasError = false;
+// ── NAV ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event && event.target && event.target.classList.add('active');
+  // Sync dropdowns
+  populateDropdowns();
+  if (id === 'dashboard') updateDashboard();
+  if (id === 'customers') renderCustomers();
+  if (id === 'transactions') renderTransactions();
+  if (id === 'redeem') updateRedeemBalance();
+}
 
-      if (name.length < 2) {
-        showError('err-name', 'reg-name', 'Please enter a valid name (at least 2 characters).');
-        hasError = true;
-      }
+// ── POINTS CALC ──
+function calcPoints(amount, mult) {
+  const base = Math.floor(amount / 10);
+  return Math.floor(base * mult);
+}
 
-      // Basic email format check using a regex pattern
-      // I looked up what a valid email pattern looks like
-      var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(email)) {
-        showError('err-email', 'reg-email', 'Please enter a valid email address.');
-        hasError = true;
-      }
+// ── BONUS SELECT ──
+function selectBonus(el) {
+  document.querySelectorAll('.bonus-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedBonus = { mult: parseFloat(el.dataset.mult), label: el.dataset.label };
+  previewPoints();
+}
 
-      // Check if this email is already in the list
-      var alreadyExists = customers.find(function(c) { return c.email === email; });
-      if (alreadyExists) {
-        showError('err-email', 'reg-email', 'This email is already registered.');
-        hasError = true;
-      }
+function previewPoints() {
+  const amt = parseFloat(document.getElementById('txn-amount').value);
+  const preview = document.getElementById('pts-preview');
+  if (!amt || amt < 1) { preview.style.display = 'none'; return; }
+  const base = Math.floor(amt / 10);
+  const bonus = Math.floor(base * selectedBonus.mult) - base;
+  const total = base + bonus;
+  preview.style.display = 'block';
+  preview.innerHTML = `+${base} base pts${bonus > 0 ? ` + ${bonus} bonus pts (${selectedBonus.label})` : ''} = <strong>+${total} pts</strong>`;
+}
+document.getElementById('txn-amount').addEventListener('input', previewPoints);
 
-      // Phone must be exactly 10 digits
-      if (!/^\d{10}$/.test(phone)) {
-        showError('err-phone', 'reg-phone', 'Phone number must be exactly 10 digits.');
-        hasError = true;
-      }
+// ── VALIDATE ──
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
+  document.querySelectorAll('input, select').forEach(e => e.classList.remove('error'));
+}
+function setError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; }
+  const inputId = id.replace('-err','');
+  const inp = document.getElementById(inputId);
+  if (inp) inp.classList.add('error');
+}
 
-      if (hasError) return; // Stop here if any field failed
+// ── REGISTER ──
+function registerCustomer() {
+  clearErrors();
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  let valid = true;
 
-      // All good — add the new customer to the array
-      var newCustomer = {
-        name: name,
-        email: email,
-        phone: phone,
-        points: 0,
-        totalSpent: 0
-      };
+  if (!name || name.length < 2) { setError('reg-name-err', 'Name must be at least 2 characters.'); valid = false; }
+  const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRx.test(email)) { setError('reg-email-err', 'Enter a valid email address.'); valid = false; }
+  if (customers.find(c => c.email === email)) { setError('reg-email-err', 'This email is already registered.'); valid = false; }
+  if (!phone || !/^\d{10}$/.test(phone)) { setError('reg-phone-err', 'Enter a valid 10-digit phone number.'); valid = false; }
+  if (!valid) return;
 
-      customers.push(newCustomer);
-      saveData();
-      refreshDropdown();
-      renderTable();
+  const customer = {
+    id: genId(),
+    name, email, phone,
+    points: 0,
+    totalSpent: 0,
+    createdAt: new Date().toISOString()
+  };
+  customers.push(customer);
+  save();
+  toast(`${name} registered successfully!`);
+  document.getElementById('reg-name').value = '';
+  document.getElementById('reg-email').value = '';
+  document.getElementById('reg-phone').value = '';
+  populateDropdowns();
+  updateDashboard();
+}
 
-      // Clear the form fields
-      document.getElementById('reg-name').value  = '';
-      document.getElementById('reg-email').value = '';
-      document.getElementById('reg-phone').value = '';
+// ── ADD TRANSACTION ──
+function addTransaction() {
+  clearErrors();
+  const custId = document.getElementById('txn-customer').value;
+  const amount = parseFloat(document.getElementById('txn-amount').value);
+  let valid = true;
 
-      // Show success message briefly
-      flashSuccess('reg-success', 'Customer registered successfully!');
-    }
+  if (!custId) { setError('txn-cust-err', 'Please select a customer.'); valid = false; }
+  if (!amount || amount < 1) { setError('txn-amount-err', 'Enter a valid spend amount (min ₹1).'); valid = false; }
+  if (!valid) return;
 
+  const cust = customers.find(c => c.id === custId);
+  const pts = calcPoints(amount, selectedBonus.mult);
 
-    // ADD POINTS
-    function addPoints() {
+  cust.points += pts;
+  cust.totalSpent = (cust.totalSpent || 0) + amount;
 
-      clearErrors();
+  const txn = {
+    id: 't' + Date.now(),
+    customerId: custId,
+    customerName: cust.name,
+    amount,
+    points: pts,
+    bonus: selectedBonus.label,
+    bonusMult: selectedBonus.mult,
+    type: 'earn',
+    date: new Date().toISOString()
+  };
+  transactions.unshift(txn);
+  save();
+  toast(`+${pts} points added to ${cust.name}!`, 'success');
+  document.getElementById('txn-amount').value = '';
+  document.getElementById('pts-preview').style.display = 'none';
+  updateDashboard();
+}
 
-      var selectedIndex = document.getElementById('txn-customer').value;
-      var amountStr     = document.getElementById('txn-amount').value;
-      var multiplier    = parseFloat(document.getElementById('txn-bonus').value);
+// ── DROPDOWNS ──
+function populateDropdowns() {
+  ['txn-customer','redeem-customer'].forEach(id => {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = `<option value="">— Choose a customer —</option>`;
+    customers.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = `${c.name} (${c.id}) — ${c.points} pts`;
+      sel.appendChild(o);
+    });
+    sel.value = prev;
+  });
+}
 
-      var hasError = false;
+// ── DASHBOARD STATS ──
+function updateDashboard() {
+  const totalPts = customers.reduce((s,c) => s + c.points, 0);
+  document.getElementById('dash-total-pts').textContent = totalPts.toLocaleString();
+  document.getElementById('dash-total-cust').textContent = customers.length;
+  document.getElementById('dash-platinum').textContent = customers.filter(c => getTier(c.points) === 'Platinum').length;
+  document.getElementById('dash-gold').textContent = customers.filter(c => getTier(c.points) === 'Gold').length;
+  document.getElementById('dash-txns').textContent = transactions.length;
+}
 
-      if (selectedIndex === '') {
-        showError('err-cust', 'txn-customer', 'Please select a customer.');
-        hasError = true;
-      }
+// ── TIER FILTER ──
+function setTierFilter(t, btn) {
+  tierFilter = t;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCustomers();
+}
 
-      var amount = parseFloat(amountStr);
-      if (!amountStr || isNaN(amount) || amount < 1) {
-        showError('err-amount', 'txn-amount', 'Please enter a valid amount (minimum ₹1).');
-        hasError = true;
-      }
+// ── RENDER CUSTOMERS ──
+function renderCustomers() {
+  const q = (document.getElementById('cust-search').value || '').toLowerCase();
+  let list = customers.filter(c => {
+    const match = c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
+    const tierMatch = tierFilter === 'all' || getTier(c.points) === tierFilter;
+    return match && tierMatch;
+  });
 
-      if (hasError) return;
+  const tbody = document.getElementById('customers-tbody');
+  const empty = document.getElementById('customers-empty');
 
-      // Calculate the points earned
-      var pointsEarned = calculatePoints(amount, multiplier);
+  if (!list.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
 
-      // Update the customer's data
-      customers[selectedIndex].points     += pointsEarned;
-      customers[selectedIndex].totalSpent += amount;
+  tbody.innerHTML = list.map(c => {
+    const tier = getTier(c.points);
+    const txnCount = transactions.filter(t => t.customerId === c.id).length;
+    return `
+    <tr>
+      <td>
+        <div class="customer-name">${c.name}</div>
+        <div class="customer-id">${c.id} · ${c.email}</div>
+      </td>
+      <td><span class="tier-badge tier-${tier}">${tierIcon(tier)} ${tier}</span></td>
+      <td><span class="points-val" style="color:var(--gold);">${c.points.toLocaleString()}</span></td>
+      <td>₹${(c.totalSpent||0).toLocaleString()}</td>
+      <td>${txnCount}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="openProfile('${c.id}')">View</button>
+        <button class="btn btn-sm btn-danger" style="margin-left:6px;" onclick="deleteCustomer('${c.id}')">Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
 
-      saveData();
-      refreshDropdown();
-      renderTable();
+// ── OPEN PROFILE ──
+function openProfile(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  const tier = getTier(c.points);
+  const next = nextTierPts(c.points);
+  const prog = next ? Math.round((c.points / next.target) * 100) : 100;
+  const custTxns = transactions.filter(t => t.customerId === id);
 
-      // Reset the amount field and preview
-      document.getElementById('txn-amount').value = '';
-      document.getElementById('pts-preview').textContent = '';
+  document.getElementById('modal-name').innerHTML = `${c.name} <span class="tier-badge tier-${tier}" style="font-size:11px;">${tierIcon(tier)} ${tier}</span>`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:12px; color:var(--ink-muted); margin-bottom:16px;">${c.id} · ${c.email} · ${c.phone}</div>
+    <div style="background:var(--gold-light); border-radius:10px; padding:14px; margin-bottom:16px; text-align:center;">
+      <div style="font-size:12px; color:#9B7B2A; margin-bottom:4px;">Points Balance</div>
+      <div style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; color:var(--gold);">${c.points.toLocaleString()}</div>
+    </div>
+    ${next ? `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--ink-muted); margin-bottom:4px;">
+        <span>Progress to ${next.next}</span><span>${next.need.toLocaleString()} pts away</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${prog}%;"></div></div>
+    </div>` : '<div style="text-align:center; font-size:13px; color:var(--gold); font-weight:600; margin-bottom:16px;">🎉 Maximum tier reached!</div>'}
+    <div style="font-size:13px; font-weight:600; margin-bottom:10px; color:var(--ink-muted);">LAST TRANSACTIONS</div>
+    ${custTxns.slice(0,5).map(t => `
+      <div class="txn-item">
+        <div class="txn-icon" style="background:${t.type==='earn'?'var(--green-light)':'var(--red-light)'};">${t.type==='earn'?'💳':'🎁'}</div>
+        <div class="txn-desc">
+          <div class="name">₹${t.amount?.toLocaleString() || ''} spend${t.bonus&&t.bonus!='None'?' · '+t.bonus+' bonus':''}</div>
+          <div class="meta">${new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+        <div class="txn-pts ${t.type==='earn'?'pts-pos':'pts-neg'}">${t.type==='earn'?'+':'-'}${t.points}</div>
+      </div>`).join('') || '<div class="empty"><p>No transactions yet.</p></div>'}
+  `;
+  document.getElementById('profile-modal').style.display = 'flex';
+}
 
-      var custName = customers[selectedIndex].name;
-      flashSuccess('txn-success', '+' + pointsEarned + ' points added to ' + custName + '!');
-    }
+function closeModal(e) {
+  if (e.target === document.getElementById('profile-modal'))
+    document.getElementById('profile-modal').style.display = 'none';
+}
 
+// ── DELETE ──
+function deleteCustomer(id) {
+  if (!confirm('Delete this customer and all their data?')) return;
+  customers = customers.filter(c => c.id !== id);
+  transactions = transactions.filter(t => t.customerId !== id);
+  save();
+  toast('Customer deleted.', 'info');
+  renderCustomers();
+  updateDashboard();
+}
 
-    // LIVE POINTS PREVIEW
-    // Shows how many points will be added before the user clicks the button
-    function showPointsPreview() {
-      var amount     = parseFloat(document.getElementById('txn-amount').value);
-      var multiplier = parseFloat(document.getElementById('txn-bonus').value);
-      var preview    = document.getElementById('pts-preview');
+// ── TRANSACTIONS ──
+function renderTransactions() {
+  const list = document.getElementById('txn-list');
+  const empty = document.getElementById('txn-empty');
+  if (!transactions.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list.innerHTML = transactions.map(t => `
+    <div class="txn-item">
+      <div class="txn-icon" style="background:${t.type==='earn'?'var(--green-light)':'var(--red-light)'};">${t.type==='earn'?'💳':'🎁'}</div>
+      <div class="txn-desc">
+        <div class="name">${t.customerName} — ₹${(t.amount||0).toLocaleString()} spend</div>
+        <div class="meta">${new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}${t.bonus&&t.bonus!='None'?' · <span class="tag">'+t.bonus+'</span>':''}</div>
+      </div>
+      <div class="txn-pts ${t.type==='earn'?'pts-pos':'pts-neg'}">${t.type==='earn'?'+':'-'}${t.points} pts</div>
+    </div>`).join('');
+}
 
-      if (!amount || amount < 1) {
-        preview.textContent = '';
-        return;
-      }
+// ── REDEEM ──
+function updateRedeemBalance() {
+  const id = document.getElementById('redeem-customer').value;
+  const card = document.getElementById('redeem-balance-card');
+  if (!id) { card.style.display='none'; return; }
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  const tier = getTier(c.points);
+  card.style.display = 'block';
+  document.getElementById('redeem-balance-val').textContent = c.points.toLocaleString();
+  document.getElementById('redeem-tier-badge').innerHTML = `<span class="tier-badge tier-${tier}">${tierIcon(tier)} ${tier}</span>`;
+}
 
-      var pts = calculatePoints(amount, multiplier);
-      preview.textContent = '→ ' + pts + ' points will be added';
-    }
+function updateRedeemCalc() {
+  const pts = parseInt(document.getElementById('redeem-pts').value);
+  const calc = document.getElementById('redeem-calc');
+  if (!pts || pts < 100) { calc.style.display='none'; return; }
+  const val = Math.floor(pts / 100) * 10;
+  calc.style.display='block';
+  calc.textContent = `${pts.toLocaleString()} points = ₹${val} discount`;
+}
 
+function redeemPoints() {
+  clearErrors();
+  const id = document.getElementById('redeem-customer').value;
+  const pts = parseInt(document.getElementById('redeem-pts').value);
 
-    // REFRESH THE CUSTOMER DROPDOWN
-    // Called whenever a new customer is added so the dropdown stays up to date
-    function refreshDropdown() {
-      var select = document.getElementById('txn-customer');
-      select.innerHTML = '<option value="">-- Select a customer --</option>';
+  if (!id) { document.getElementById('redeem-err').textContent = 'Please select a customer.'; return; }
+  const c = customers.find(x => x.id === id);
+  if (!pts || pts < 100) { document.getElementById('redeem-err').textContent = 'Minimum redemption is 100 points.'; return; }
+  if (pts > c.points) { document.getElementById('redeem-err').textContent = `Not enough points. Balance: ${c.points}.`; return; }
 
-      customers.forEach(function(customer, index) {
-        var option = document.createElement('option');
-        option.value       = index;
-        option.textContent = customer.name + ' (' + customer.points + ' pts)';
-        select.appendChild(option);
-      });
-    }
+  c.points -= pts;
+  const txn = {
+    id: 't' + Date.now(),
+    customerId: id,
+    customerName: c.name,
+    points: pts,
+    type: 'redeem',
+    date: new Date().toISOString()
+  };
+  transactions.unshift(txn);
+  save();
+  const val = Math.floor(pts / 100) * 10;
+  toast(`${pts} points redeemed for ₹${val} off!`, 'success');
+  document.getElementById('redeem-pts').value = '';
+  document.getElementById('redeem-calc').style.display = 'none';
+  updateRedeemBalance();
+  populateDropdowns();
+  updateDashboard();
+}
 
+// ── SEED DEMO DATA ──
+function seedDemo() {
+  if (customers.length) return;
+  const demo = [
+    {id:'CDEMO1', name:'Priya Mehta', email:'priya@example.com', phone:'9876543210', points:8420, totalSpent:84200},
+    {id:'CDEMO2', name:'Arjun Sharma', email:'arjun@example.com', phone:'9123456789', points:2150, totalSpent:21500},
+    {id:'CDEMO3', name:'Sunita Rao', email:'sunita@example.com', phone:'9988776655', points:12300, totalSpent:123000},
+    {id:'CDEMO4', name:'Karan Patel', email:'karan@example.com', phone:'9001234567', points:400, totalSpent:4000},
+  ].map(c => ({...c, createdAt: new Date().toISOString()}));
+  customers = demo;
+  transactions = [
+    {id:'t1', customerId:'CDEMO1', customerName:'Priya Mehta', amount:5000, points:750, bonus:'Weekend', bonusMult:1.5, type:'earn', date: new Date(Date.now()-86400000*2).toISOString()},
+    {id:'t2', customerId:'CDEMO3', customerName:'Sunita Rao', amount:20000, points:6000, bonus:'Festival', bonusMult:3, type:'earn', date: new Date(Date.now()-86400000).toISOString()},
+    {id:'t3', customerId:'CDEMO2', customerName:'Arjun Sharma', amount:2000, points:200, bonus:'None', bonusMult:1, type:'earn', date: new Date(Date.now()-3600000).toISOString()},
+    {id:'t4', customerId:'CDEMO1', customerName:'Priya Mehta', points:500, type:'redeem', date: new Date(Date.now()-1800000).toISOString()},
+  ];
+  save();
+}
 
-    // RENDER SUMMARY TABLE
-    function renderTable() {
-      var tbody = document.getElementById('summary-body');
-
-      if (customers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No customers registered yet.</td></tr>';
-        return;
-      }
-
-      var rows = '';
-      customers.forEach(function(customer, index) {
-        var tier = getTier(customer.points);
-        rows += '<tr>' +
-          '<td>' + (index + 1) + '</td>' +
-          '<td><strong>' + customer.name + '</strong></td>' +
-          '<td>' + customer.email + '</td>' +
-          '<td>' + customer.phone + '</td>' +
-          '<td><strong>' + customer.points.toLocaleString() + '</strong></td>' +
-          '<td><span class="tier-badge ' + tier + '">' + tier + '</span></td>' +
-          '<td>₹' + customer.totalSpent.toLocaleString() + '</td>' +
-        '</tr>';
-      });
-
-      tbody.innerHTML = rows;
-    }
-
-
-    // HELPER: show error message and highlight field in red
-    function showError(errorDivId, inputId, message) {
-      document.getElementById(errorDivId).textContent = message;
-      var input = document.getElementById(inputId);
-      if (input) input.classList.add('invalid');
-    }
-
-
-    // HELPER: clear all error messages and red borders
-    function clearErrors() {
-      var errorDivs = document.querySelectorAll('.error-msg');
-      errorDivs.forEach(function(div) { div.textContent = ''; });
-
-      var inputs = document.querySelectorAll('input, select');
-      inputs.forEach(function(input) { input.classList.remove('invalid'); });
-    }
-
-
-    // HELPER: show a green success message that fades after 2.5 seconds
-    function flashSuccess(divId, message) {
-      var box = document.getElementById(divId);
-      box.textContent   = message;
-      box.style.display = 'block';
-      setTimeout(function() {
-        box.style.display = 'none';
-      }, 2500);
-    }
-
-
-    // Run on page load — restore saved data from localStorage
-    refreshDropdown();
-    renderTable();
-
-  </script>
+// ── INIT ──
+seedDemo();
+populateDropdowns();
+updateDashboard();
+</script>
 </body>
 </html>
