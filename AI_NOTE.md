@@ -2,18 +2,25 @@
 
 ## Tools I Used
 
-I used **Claude (claude.ai)** during this project, mainly when I got stuck or wasn't sure about syntax. I wouldn't say it built the project for me — I had to understand what I wanted first, then use it to help me figure out specific parts I wasn't confident about.
+I used **Claude (claude.ai)** as an AI-assisted development tool during this project. I mainly used it when I needed help understanding specific JavaScript concepts or checking parts of my approach. The project structure, feature decisions, points logic, validation flow, and final testing were completed by me.
 
-The two main areas where Claude helped were:
+The main areas where Claude helped were:
 
-1. **The email validation regex** — I knew I needed to check if an email "looks valid" but I didn't remember the exact regex pattern off the top of my head. I asked Claude to explain how regex works for email, and it walked me through `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`. I now understand what each part means.
+1. **Email validation regex**
+   I knew the form needed to check whether an email address was in a valid format, but I was not fully confident writing the regex from memory. Claude helped explain the pattern `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`, including what each part does. After understanding it, I used it in my validation logic.
 
-2. **localStorage with objects** — I initially tried storing the customer object directly and kept getting `[object Object]` back when I retrieved it. Claude told me I needed `JSON.stringify()` when saving and `JSON.parse()` when reading. That was a small but important fix.
+2. **Using localStorage with objects**
+   I initially tried storing customer data directly and noticed that objects were not being saved correctly. Claude helped me understand that browser localStorage only stores strings, so I needed to use `JSON.stringify()` when saving data and `JSON.parse()` when reading it back. This helped me store customer records properly between page refreshes.
 
-Everything else — the form structure, the tier logic, the points formula, the validation checks — I wrote myself and tested manually by registering dummy customers.
+3. **Comparing simple options**
+   I also used Claude to think through whether I should use a database or localStorage. I chose localStorage because this is a small browser-based case study, and it keeps the project easy to run without requiring installation, backend setup, or database configuration.
 
 ## Challenges I Faced
 
-The trickiest part was keeping the dropdown in sync with the table. When I added a new customer, the table updated fine but the dropdown in the "Add Points" form still showed old data. I had to figure out that I needed to call `refreshDropdown()` every time I registered a customer or added points — not just once on page load. I solved this by tracing through the code step by step and checking where the data was being updated vs where the UI was being rebuilt.
+One challenge was keeping the customer dropdown and summary table updated at the same time. At first, when I registered a new customer, the table updated correctly but the dropdown still showed old data. I solved this by tracing where the data changed and then calling the dropdown refresh function after customer registration and points updates.
 
-Another small issue: I used `var` throughout instead of `let`/`const` because that's what I'm more comfortable with from my JavaScript basics. It works the same for this use case.
+Another challenge was balancing simplicity with functionality. I wanted the app to be easy to run, but still show proper validation, points calculation, bonus multipliers, stored customer records, and a clear summary. I chose plain HTML, CSS, and JavaScript because it was enough for the requirements and avoided unnecessary framework setup.
+
+I used `var` in the JavaScript because I am comfortable with basic JavaScript syntax and wanted to keep the code consistent throughout the project. In a larger project, I would use `let` and `const` more carefully to improve scope control and code quality.
+
+Overall, AI helped me work through specific development questions, but I made the final decisions, wrote the application flow, tested the features manually, and adjusted the code to match the case study requirements.
