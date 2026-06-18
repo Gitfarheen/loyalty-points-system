@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loyalty Points System</title>
+  <!--
+    Customer Loyalty Points System
+    Built by: Farheen Chowdhary
+    Date: 18 June 2026
+    
+    This was my first time working with localStorage properly.
+    Took me a while to figure out JSON.parse and JSON.stringify
+    but once I got it, the rest made sense.
+  -->
+  <style> 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 30px 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      color: #2c3e50;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    /* I used a 2-column grid layout for the forms side by side */
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      font-size: 17px;
+      margin-bottom: 18px;
+      color: #2c3e50;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-top: 14px;
+      margin-bottom: 5px;
+      color: #444;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
+    }
+
+    /* Red border when field has error */
+    input.invalid {
+      border-color: #e74c3c;
+    }
+
+    .error-msg {
+      color: #e74c3c;
+      font-size: 12px;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 11px;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: #2471a3;
+    }
+
+    /* Small green message that appears after success */
+    .success-box {
+      display: none;
+      margin-top: 12px;
+      padding: 9px 12px;
+      background: #eafaf1;
+      border-left: 4px solid #27ae60;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1e8449;
+    }
+
+    /* Summary table spans full width */
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    thead {
+      background: #f7f8fa;
+    }
+
+    th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 12px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #fafafa;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #bbb;
+      padding: 30px;
+      font-size: 14px;
+    }
+
+    /* Tier badge colors */
+    .tier-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .Bronze   { background: #fde8d8; color: #7e5109; }
+    .Silver   { background: #eaecee; color: #555; }
+    .Gold     { background: #fef9e7; color: #9a7d0a; }
+    .Platinum { background: #d6eaf8; color: #1a5276; }
+
+    /* Points preview text */
+    #pts-preview {
+      font-size: 13px;
+      color: #27ae60;
+      font-weight: bold;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏆 Customer Loyalty Points System</h1>
+  <p class="subtitle">Register customers, track their spend, and reward them with points</p>
+
+  <div class="container">
+
+    <!-- FORM 1: Register a new customer -->
+    <div class="card">
+      <h2>Register New Customer</h2>
+
+      <label for="reg-name">Full Name</label>
+      <input id="reg-name" type="text" placeholder="e.g. Rahul Verma" />
+      <div class="error-msg" id="err-name"></div>
+
+      <label for="reg-email">Email Address</label>
+      <input id="reg-email" type="email" placeholder="rahul@gmail.com" />
+      <div class="error-msg" id="err-email"></div>
+
+      <label for="reg-phone">Phone Number</label>
+      <input id="reg-phone" type="tel" placeholder="10-digit number" maxlength="10" />
+      <div class="error-msg" id="err-phone"></div>
+
+      <button onclick="registerCustomer()">Register Customer</button>
+      <div class="success-box" id="reg-success">Customer registered successfully!</div>
+    </div>
+
+    <!-- FORM 2: Add points for a transaction -->
+    <div class="card">
+      <h2>Add Points for Purchase</h2>
+
+      <label for="txn-customer">Select Customer</label>
+      <select id="txn-customer">
+        <option value="">-- Select a customer --</option>
+      </select>
+      <div class="error-msg" id="err-cust"></div>
+
+      <label for="txn-amount">Amount Spent (₹)</label>
+      <input id="txn-amount" type="number" min="1" placeholder="e.g. 500" oninput="showPointsPreview()" />
+      <div class="hint">Formula: 1 point for every ₹10 spent</div>
+      <div class="error-msg" id="err-amount"></div>
+
+      <label for="txn-bonus">Apply Bonus</label>
+      <select id="txn-bonus" onchange="showPointsPreview()">
+        <option value="1">No Bonus (1×)</option>
+        <option value="1.5">Weekend Bonus (1.5×)</option>
+        <option value="2">Birthday Bonus (2×)</option>
+        <option value="3">Festival / Special Bonus (3×)</option>
+      </select>
+
+      <!-- Live preview before submitting -->
+      <div id="pts-preview"></div>
+
+      <button onclick="addPoints()">Add Points</button>
+      <div class="success-box" id="txn-success"></div>
+    </div>
+
+    <!-- SUMMARY TABLE: shows all registered customers -->
+    <div class="card full-width">
+      <h2>Customer Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Points</th>
+            <th>Tier</th>
+            <th>Total Spent</th>
+          </tr>
+        </thead>
+        <tbody id="summary-body">
+          <tr>
+            <td colspan="7" class="no-data">No customers registered yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+
+    // I store all customers as an array of objects in localStorage
+    // Each customer has: name, email, phone, points, totalSpent
+    var customers = JSON.parse(localStorage.getItem('loyaltyCustomers') || '[]');
+
+
+    // TIER FUNCTION
+    // Checks how many points a customer has and returns their tier name
+    // I decided on these thresholds myself based on common loyalty programs
+    function getTier(points) {
+      if (points >= 10000) return 'Platinum';
+      if (points >= 5000)  return 'Gold';
+      if (points >= 1000)  return 'Silver';
+      return 'Bronze';
+    }
+
+
+    // POINTS CALCULATION
+    // Base rule: 1 point per ₹10 spent
+    // Multiply by the bonus multiplier if any bonus is selected
+    function calculatePoints(amountSpent, bonusMultiplier) {
+      var basePoints = Math.floor(amountSpent / 10);
+      var totalPoints = Math.floor(basePoints * bonusMultiplier);
+      return totalPoints;
+    }
+
+
+    // SAVE TO LOCALSTORAGE
+    // I call this every time the customers array changes
+    // Had to use JSON.stringify because localStorage only stores strings
+    function saveData() {
+      localStorage.setItem('loyaltyCustomers', JSON.stringify(customers));
+    }
+
+
+    // REGISTER CUSTOMER
+    function registerCustomer() {
+
+      // First clear any previous error messages
+      clearErrors();
+
+      var name  = document.getElementById('reg-name').value.trim();
+      var email = document.getElementById('reg-email').value.trim();
+      var phone = document.getElementById('reg-phone').value.trim();
+
+      // Validate all fields before doing anything
+      var hasError = false;
+
+      if (name.length < 2) {
+        showError('err-name', 'reg-name', 'Please enter a valid name (at least 2 characters).');
+        hasError = true;
+      }
+
+      // Basic email format check using a regex pattern
+      // I looked up what a valid email pattern looks like
+      var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        showError('err-email', 'reg-email', 'Please enter a valid email address.');
+        hasError = true;
+      }
+
+      // Check if this email is already in the list
+      var alreadyExists = customers.find(function(c) { return c.email === email; });
+      if (alreadyExists) {
+        showError('err-email', 'reg-email', 'This email is already registered.');
+        hasError = true;
+      }
+
+      // Phone must be exactly 10 digits
+      if (!/^\d{10}$/.test(phone)) {
+        showError('err-phone', 'reg-phone', 'Phone number must be exactly 10 digits.');
+        hasError = true;
+      }
+
+      if (hasError) return; // Stop here if any field failed
+
+      // All good — add the new customer to the array
+      var newCustomer = {
+        name: name,
+        email: email,
+        phone: phone,
+        points: 0,
+        totalSpent: 0
+      };
+
+      customers.push(newCustomer);
+      saveData();
+      refreshDropdown();
+      renderTable();
+
+      // Clear the form fields
+      document.getElementById('reg-name').value  = '';
+      document.getElementById('reg-email').value = '';
+      document.getElementById('reg-phone').value = '';
+
+      // Show success message briefly
+      flashSuccess('reg-success', 'Customer registered successfully!');
+    }
+
+
+    // ADD POINTS
+    function addPoints() {
+
+      clearErrors();
+
+      var selectedIndex = document.getElementById('txn-customer').value;
+      var amountStr     = document.getElementById('txn-amount').value;
+      var multiplier    = parseFloat(document.getElementById('txn-bonus').value);
+
+      var hasError = false;
+
+      if (selectedIndex === '') {
+        showError('err-cust', 'txn-customer', 'Please select a customer.');
+        hasError = true;
+      }
+
+      var amount = parseFloat(amountStr);
+      if (!amountStr || isNaN(amount) || amount < 1) {
+        showError('err-amount', 'txn-amount', 'Please enter a valid amount (minimum ₹1).');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // Calculate the points earned
+      var pointsEarned = calculatePoints(amount, multiplier);
+
+      // Update the customer's data
+      customers[selectedIndex].points     += pointsEarned;
+      customers[selectedIndex].totalSpent += amount;
+
+      saveData();
+      refreshDropdown();
+      renderTable();
+
+      // Reset the amount field and preview
+      document.getElementById('txn-amount').value = '';
+      document.getElementById('pts-preview').textContent = '';
+
+      var custName = customers[selectedIndex].name;
+      flashSuccess('txn-success', '+' + pointsEarned + ' points added to ' + custName + '!');
+    }
+
+
+    // LIVE POINTS PREVIEW
+    // Shows how many points will be added before the user clicks the button
+    function showPointsPreview() {
+      var amount     = parseFloat(document.getElementById('txn-amount').value);
+      var multiplier = parseFloat(document.getElementById('txn-bonus').value);
+      var preview    = document.getElementById('pts-preview');
+
+      if (!amount || amount < 1) {
+        preview.textContent = '';
+        return;
+      }
+
+      var pts = calculatePoints(amount, multiplier);
+      preview.textContent = '→ ' + pts + ' points will be added';
+    }
+
+
+    // REFRESH THE CUSTOMER DROPDOWN
+    // Called whenever a new customer is added so the dropdown stays up to date
+    function refreshDropdown() {
+      var select = document.getElementById('txn-customer');
+      select.innerHTML = '<option value="">-- Select a customer --</option>';
+
+      customers.forEach(function(customer, index) {
+        var option = document.createElement('option');
+        option.value       = index;
+        option.textContent = customer.name + ' (' + customer.points + ' pts)';
+        select.appendChild(option);
+      });
+    }
+
+
+    // RENDER SUMMARY TABLE
+    function renderTable() {
+      var tbody = document.getElementById('summary-body');
+
+      if (customers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">No customers registered yet.</td></tr>';
+        return;
+      }
+
+      var rows = '';
+      customers.forEach(function(customer, index) {
+        var tier = getTier(customer.points);
+        rows += '<tr>' +
+          '<td>' + (index + 1) + '</td>' +
+          '<td><strong>' + customer.name + '</strong></td>' +
+          '<td>' + customer.email + '</td>' +
+          '<td>' + customer.phone + '</td>' +
+          '<td><strong>' + customer.points.toLocaleString() + '</strong></td>' +
+          '<td><span class="tier-badge ' + tier + '">' + tier + '</span></td>' +
+          '<td>₹' + customer.totalSpent.toLocaleString() + '</td>' +
+        '</tr>';
+      });
+
+      tbody.innerHTML = rows;
+    }
+
+
+    // HELPER: show error message and highlight field in red
+    function showError(errorDivId, inputId, message) {
+      document.getElementById(errorDivId).textContent = message;
+      var input = document.getElementById(inputId);
+      if (input) input.classList.add('invalid');
+    }
+
+
+    // HELPER: clear all error messages and red borders
+    function clearErrors() {
+      var errorDivs = document.querySelectorAll('.error-msg');
+      errorDivs.forEach(function(div) { div.textContent = ''; });
+
+      var inputs = document.querySelectorAll('input, select');
+      inputs.forEach(function(input) { input.classList.remove('invalid'); });
+    }
+
+
+    // HELPER: show a green success message that fades after 2.5 seconds
+    function flashSuccess(divId, message) {
+      var box = document.getElementById(divId);
+      box.textContent   = message;
+      box.style.display = 'block';
+      setTimeout(function() {
+        box.style.display = 'none';
+      }, 2500);
+    }
+
+
+    // Run on page load — restore saved data from localStorage
+    refreshDropdown();
+    renderTable();
+
+  </script>
+</body>
+</html>
