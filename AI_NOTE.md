@@ -21,6 +21,6 @@ One challenge was keeping the customer dropdown and summary table updated at the
 
 Another challenge was balancing simplicity with functionality. I wanted the app to be easy to run, but still show proper validation, points calculation, bonus multipliers, stored customer records, and a clear summary. I chose plain HTML, CSS, and JavaScript because it was enough for the requirements and avoided unnecessary framework setup.
 
-I used `var` in the JavaScript because I am comfortable with basic JavaScript syntax and wanted to keep the code consistent throughout the project. In a larger project, I would use `let` and `const` more carefully to improve scope control and code quality.
+I kept the JavaScript syntax simple and consistent throughout the project. In a larger production project, I would use let and const more carefully to improve scope control and maintainability.
 
 Overall, AI helped me work through specific development questions, but I made the final decisions, wrote the application flow, tested the features manually, and adjusted the code to match the case study requirements.
